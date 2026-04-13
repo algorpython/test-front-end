@@ -1,0 +1,981 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Interactivo Front-end</title>
+
+<style>
+  #controls {
+  position: relative;
+  z-index: 10; /* los trae al frente */
+}
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f7f7fa;
+  color: #333;
+  margin: 0;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ----- MENÃš LATERAL ----- */
+#menuPreguntas button {
+  padding: 5px 8px;
+  font-size: 13px;
+  width: 100%;
+  border-radius: 6px;
+}
+
+#sidebar {
+  width: 300px;
+  background: #602b7a;
+  color: white;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+#sidebar h2 {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 15px;
+}
+#sidebar button {
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  font-size: 16px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+#sidebar button:hover,
+#sidebar button.active {
+  background: rgba(255,255,255,0.25);
+}
+/* ===== MenÃº lateral por rangos ===== */
+
+.range-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.range-group {
+  flex: 1;
+}
+
+/* BotÃ³n del rango: 1-10, 11-20, etc. */
+.range-toggle {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Contenedor desplegable de preguntas del rango */
+.range-content {
+  margin-top: 4px;
+  display: none;           /* por defecto oculto */
+}
+
+/* Botones de pregunta individuales dentro del rango */
+.question-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  text-align: left;
+  font-size: 13px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.question-btn:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+.question-btn.active {
+  background: #fff;
+  color: #602b7a;
+  font-weight: 600;
+}
+
+
+/* ----- CONTENIDO PRINCIPAL ----- */
+#main {
+  flex: 1;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  color: #602b7a;
+  margin-bottom: 20px;
+}
+
+#quiz-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+
+
+.question.active {
+  display: block;
+}
+
+.question img {
+  display: block;
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 10px auto;
+}
+
+.answers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.answer-box {
+  width: 90%;
+  max-width: 600px;
+
+  /* âŒ QUITAMOS height fija */
+  /* height: 130px; */
+
+  padding: 5px;
+
+  background: #fff;
+  border-radius: 12px;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 3px solid #e0e0e0;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.answer-box img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;     /* nunca se deforma */
+  border-radius: 6px;
+  border: none;
+}
+
+
+.answer-box:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,.12);
+}
+
+
+.answer-box.selected {
+  border-color: #602b7a;
+  box-shadow: 0 0 10px rgba(96,43,122,0.4);
+}
+
+
+
+button {
+  padding: 10px 20px;
+  background: #602b7a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background .2s;
+}
+button:hover {
+  background: #4b1a75;
+}
+
+.result {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+}
+.correct { color: #2e8b57; }
+.incorrect { color: #d32f2f; }
+
+#controls {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#random-test-box {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  display: flex;
+  gap: 8px;
+}
+
+#random-test-box input {
+  width: 120px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 2px solid #ccc;
+  font-size: 14px;
+}
+
+#random-test-box button {
+  background: #602b7a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#random-test-box button:hover {
+  background: #4a1d5f;
+}
+#login-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #602b7a; /* morado corporativo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+#login-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  width: 260px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.25);
+}
+
+#login-box h2 {
+  color: #602b7a;
+  margin-bottom: 15px;
+}
+
+#login-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+}
+
+#login-box button {
+  width: 100%;
+  padding: 10px;
+  background: #602b7a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#login-box button:hover {
+  background: #4a1d5f;
+}
+
+#login-error {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+}
+#quiz-container {
+  position: relative;
+  min-height: 500px; /* evita saltos verticales */
+}
+
+.question {
+  position: relative; /* antes era absolute - lo quitamos */
+  width: 100%;
+  margin-bottom: 30px; /* espacio extra para los botones */
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity .25s ease-out, transform .25s ease-out;
+}
+
+.question.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.test-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.test-controls input[type="number"] {
+    width: 120px;
+    padding: 6px;
+    text-align: center;
+    font-size: 18px;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 17px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
+
+.timer-option {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 14px;
+    color: #602b7a;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.timer-option input {
+    margin: 0;
+    padding: 0;
+    line-height: 0; /* evita altura extra del input */
+}
+
+.timer-option span {
+    margin-left: 2px; /* control real del espacio */
+    display: inline-block;
+}
+
+
+#test-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 15px;
+}
+
+.row-arriba {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#random-count {
+    width: 150px;
+    padding: 6px;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
+
+#random-test-box {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* ðŸ‘‰ mantiene alineaciÃ³n a la derecha */
+    gap: 6px;
+}
+
+.row-arriba {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#random-count {
+    width: 150px;
+    padding: 6px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 2px solid #602b7a;
+}
+
+#btn-generar {
+    background-color: #602b7a;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#btn-generar:hover {
+    background-color: #4b1a60;
+}
+
+</style>
+</head>
+<body>
+<div id="login-overlay">
+    <div id="login-box">
+        <h2>Acceso al Test</h2>
+        <input type="password" id="login-input" placeholder="Introduce la contraseña">
+        <button id="login-button">Entrar</button>
+        <p id="login-error"></p>
+    </div>
+</div>
+
+<div id="sidebar">
+  <h2>Preguntas</h2>
+  <div id="menuPreguntas"></div>
+</div>
+
+<div id="main">
+    <h1>Test Front-end</h1>
+  <div id="progress-container" style="display:none; width: 100%; max-width: 800px; margin: 10px auto;">
+  <div id="progress-bar" style="height: 12px; background:#ccc; border-radius:6px;">
+    <div id="progress-fill" style="height:12px; width:0%; background:#602b7a; border-radius:6px; transition:width .3s;"></div>
+  </div>
+  <p id="progress-text" style="text-align:right; font-size:14px; color:#602b7a; font-weight:600; margin-top:4px;">
+    0% completado
+  </p>
+  <p id="timer-examen" 
+   style="display:none; 
+          text-align:center; 
+          font-size:18px; 
+          font-weight:bold; 
+          color:#d9534f; 
+          margin-top:10px;">
+⏱
+</p>
+
+</div>
+
+  <div id="contador-examen" style="display:none; text-align:right; margin-right:20px; font-size:18px; font-weight:600; color:#602b7a;">
+  Aciertos: 0 / 0
+</div>
+
+<!-- ðŸ”¹ CONTROLES PARA GENERAR TEST (en la parte derecha) -->
+<div id="random-test-box">
+    <div class="row-arriba">
+        <input type="number" id="random-count" min="1" max="247" placeholder="Numero de preguntas" />
+        <button id="btn-generar" onclick="generarTestAleatorio()">Generar test</button>
+    </div>
+
+    <label class="timer-option">
+    <input type="checkbox" id="enable-timer">
+    <span>⏱ Añadir temporizador</span>
+</label>
+
+</div>
+
+
+
+  <div id="quiz-container"></div>
+
+  <div id="controls">
+    <button id="prevBtn">⏮️ Anterior</button>
+    <button id="nextBtn">⏭️ Siguiente</button>
+  </div>
+</div>
+
+<!-- ðŸ”¥ AquÃ­ pegamos el manifest generado automÃ¡ticamente -->
+<script>
+let modoExamen = false;
+let aciertos = 0;
+let totalExamen = 0;
+
+let preguntasOriginales = [];
+let preguntas = [];
+let indiceActual = 0;
+const TOTAL_PREGUNTAS = 247;
+
+// TIMER opcional
+let tiempoRestante = 0;
+let intervaloTiempo = null;
+const TIEMPO_POR_PREGUNTA = 90; // 90s = 1,5 min
+
+const PASSWORD = "algfrontend25";
+const ACCESS_KEY = "access_granted_frontend";
+
+
+/* ----------- LOGIN ---------------- */
+function checkPassword() {
+  const input = document.getElementById("login-input").value.trim();
+  const error = document.getElementById("login-error");
+
+  if (input === PASSWORD) {
+    document.getElementById("login-overlay").style.display = "none";
+    localStorage.setItem(ACCESS_KEY, "true");
+  } else {
+    error.textContent = "Contraseña incorrecta";
+  }
+}
+document.getElementById("login-button").addEventListener("click", checkPassword);
+document.getElementById("login-input").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") checkPassword();
+});
+
+
+/* ----------- INICIO ---------- */
+window.addEventListener("load", () => {
+  if (localStorage.getItem(ACCESS_KEY) === "true") {
+    document.getElementById("login-overlay").style.display = "none";
+  }
+  inicializarQuiz();
+});
+
+
+/* -------- CARGAR MANIFEST -------- */
+async function inicializarQuiz() {
+  try {
+    const response = await fetch("manifest.json");
+    if (!response.ok) throw new Error("No se pudo cargar manifest.json");
+
+    const data = await response.json();
+
+    preguntas = Object.entries(data).map(([num, info]) => ({
+      numero: Number(num),
+      pregunta: info.pregunta,
+      respuestas: info.respuestas,
+      seleccionadas: [],
+      resultado: "",
+      tipo: info.respuestas.filter(r => r.correcta).length <= 1 ? "simple" : "multiple",
+      respondida: false
+    }));
+
+    preguntasOriginales = JSON.parse(JSON.stringify(preguntas));
+    generarMenu();
+    mostrarPregunta(0);
+  } catch (error) {
+    const cont = document.getElementById("quiz-container");
+    cont.innerHTML = "<p style='text-align:center;color:#d32f2f;font-weight:bold;'>No se pudo cargar el test. Revisa el archivo manifest.json.</p>";
+    console.error(error);
+  }
+}
+
+
+/* -------- MENÃš LATERAL -------- */
+function generarMenu() {
+  const cont = document.getElementById("menuPreguntas");
+  cont.innerHTML = "";
+
+  const total = preguntas.length;
+  const porGrupo = 10;
+
+  for (let inicio = 1; inicio <= total; inicio += porGrupo * 2) {
+    const row = document.createElement("div");
+    row.className = "range-row";
+
+    for (let col = 0; col < 2; col++) {
+      const ini = inicio + col * porGrupo;
+      if (ini > total) break;
+
+      const fin = Math.min(ini + porGrupo - 1, total);
+
+      const g = document.createElement("div");
+      g.className = "range-group";
+
+      const toggle = document.createElement("button");
+      toggle.className = "range-toggle";
+      toggle.textContent = `${ini}-${fin}`;
+
+      const content = document.createElement("div");
+      content.className = "range-content";
+
+      for (let q = ini; q <= fin; q++) {
+        const btn = document.createElement("button");
+        btn.className = "question-btn";
+        btn.textContent = `Pregunta ${q}`;
+        btn.dataset.index = q - 1;
+
+        btn.onclick = () => {
+          mostrarPregunta(q - 1);
+          document.querySelectorAll(".range-content").forEach(x => x.style.display = "none");
+        };
+
+        content.appendChild(btn);
+      }
+
+      toggle.onclick = () => {
+        document.querySelectorAll(".range-content").forEach(x => x.style.display = "none");
+        content.style.display = "block";
+      };
+
+      g.appendChild(toggle);
+      g.appendChild(content);
+      row.appendChild(g);
+    }
+
+    cont.appendChild(row);
+  }
+}
+
+function actualizarMenu() {
+  document.querySelectorAll(".question-btn").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.dataset.index) === indiceActual);
+  });
+}
+
+
+/* -------- MOSTRAR PREGUNTA -------- */
+function mostrarPregunta(idx) {
+  indiceActual = idx;
+  actualizarMenu();
+
+  const p = preguntas[idx];
+  const cont = document.getElementById("quiz-container");
+  cont.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "question";
+  box.style.opacity = "0";
+
+  const h = document.createElement("h2");
+  h.textContent = `Pregunta ${idx + 1} / ${preguntas.length}`;
+  h.style.textAlign = "center";
+  h.style.color = "#602b7a";
+  box.appendChild(h);
+
+  const colP = document.createElement("div");
+  colP.className = "col-pregunta";
+
+  const imgP = new Image();
+  imgP.src = p.pregunta;
+  colP.appendChild(imgP);
+
+  const divider = document.createElement("div");
+  divider.className = "divider";
+
+  const colR = document.createElement("div");
+  colR.className = "col-respuestas";
+
+  const answers = document.createElement("div");
+  answers.className = "answers";
+
+  p.respuestas.forEach((r, i) => {
+    const ab = document.createElement("div");
+    ab.className = "answer-box";
+    if (p.seleccionadas.includes(i)) ab.classList.add("selected");
+
+    const imgR = new Image();
+    imgR.src = r.src;
+    ab.dataset.correcta = r.correcta ? "true" : "false";
+    ab.appendChild(imgR);
+
+    ab.onclick = () => {
+      if (modoExamen && p.respondida) return;
+      if (p.tipo === "simple") {
+        answers.querySelectorAll(".answer-box").forEach(x => x.classList.remove("selected"));
+        p.seleccionadas = [i];
+        ab.classList.add("selected");
+      } else {
+        ab.classList.toggle("selected");
+        if (ab.classList.contains("selected"))
+          p.seleccionadas.push(i);
+        else
+          p.seleccionadas = p.seleccionadas.filter(x => x !== i);
+      }
+    };
+
+    answers.appendChild(ab);
+  });
+
+  colR.appendChild(answers);
+
+  const btnC = document.createElement("button");
+  btnC.textContent = "Comprobar";
+  btnC.onclick = () => comprobar(p, box);
+  colR.appendChild(btnC);
+
+  const res = document.createElement("div");
+  res.className = "result";
+  res.textContent = p.resultado;
+  colR.appendChild(res);
+
+  box.appendChild(colP);
+  box.appendChild(divider);
+  box.appendChild(colR);
+  cont.appendChild(box);
+
+  actualizarBotones();
+  precargarSiguiente();
+  actualizarProgreso();
+  actualizarTimerUI();
+
+  let loaded = 0;
+  const imgs = box.querySelectorAll("img");
+  imgs.forEach(img => {
+    img.onload = img.onerror = () => {
+      if (++loaded === imgs.length) {
+        ajustarAlturaRespuestas();
+        box.style.transition = "opacity .25s"; box.style.opacity = "1";
+      }
+    };
+  });
+}
+
+function precargarSiguiente() {
+  const p = preguntas[indiceActual + 1];
+  if (!p) return;
+  new Image().src = p.pregunta;
+  p.respuestas.forEach(r => new Image().src = r.src);
+}
+
+
+/* -------- COMPROBAR -------- */
+function comprobar(p, box) {
+  const cajas = box.querySelectorAll(".answer-box");
+  const sel = [...cajas].filter(b => b.classList.contains("selected"));
+  const correctas = [...cajas].filter(b => b.dataset.correcta === "true");
+  const buenas = sel.filter(b => b.dataset.correcta === "true");
+  const malas = sel.filter(b => b.dataset.correcta === "false");
+
+  const res = box.querySelector(".result");
+
+  if (!sel.length) {
+    res.textContent = "Selecciona una opción.";
+    res.className = "result incorrect";
+    return;
+  }
+
+  if (buenas.length === correctas.length && malas.length === 0) {
+    res.textContent = "✅ ¡Respuesta correcta!";
+    res.className = "result correct";
+    if (modoExamen) aciertos++;
+  } else {
+    res.textContent = "❌ Respuesta incorrecta";
+    res.className = "result incorrect";
+  }
+
+  if (modoExamen) {
+    cajas.forEach(b => b.style.pointerEvents = "none");
+    p.respondida = true;
+  }
+
+  actualizarProgreso();
+}
+
+
+/* -------- CONTROL BOTONES -------- */
+function actualizarBotones() {
+  const prev = document.getElementById("prevBtn");
+  const next = document.getElementById("nextBtn");
+
+  prev.style.display = "inline-block";
+  next.style.display = "inline-block";
+
+  prev.disabled = indiceActual === 0;
+  prev.onclick = () => mostrarPregunta(--indiceActual);
+
+  const ultima = indiceActual === preguntas.length - 1;
+
+  if (modoExamen && ultima) {
+    next.textContent = "Finalizar";
+    next.onclick = finalizarExamen;
+  } else {
+    next.textContent = "Siguiente";
+    next.disabled = ultima && !modoExamen;
+    next.onclick = () => mostrarPregunta(++indiceActual);
+  }
+}
+
+
+/* -------- PROGRESO -------- */
+function actualizarProgreso() {
+  const total = totalExamen || preguntas.length;
+  const respondidas = preguntas.filter(p => p.respondida).length;
+  const pct = Math.round((respondidas / total) * 100);
+
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-text").textContent = `${pct}% completado`;
+
+  if (modoExamen) {
+    document.getElementById("contador-examen").textContent =
+      `Aciertos: ${aciertos} / ${totalExamen} (${Math.round((aciertos / totalExamen) * 100)}%)`;
+  }
+}
+
+
+function ajustarAlturaRespuestas() {
+  let maxH = 0;
+  const boxes = document.querySelectorAll(".answer-box");
+  boxes.forEach(b => b.style.height = "auto");
+  boxes.forEach(b => maxH = Math.max(maxH, b.getBoundingClientRect().height));
+  boxes.forEach(b => b.style.height = maxH + "px");
+}
+
+
+/* -------- TIMER (Opcional) -------- */
+function actualizarTimerUI() {
+  const t = document.getElementById("timer-examen");
+  if (!modoExamen || !document.getElementById("enable-timer").checked) return;
+
+  let min = Math.floor(tiempoRestante / 60);
+  let seg = tiempoRestante % 60;
+  if (seg < 10) seg = "0" + seg;
+
+  t.textContent = `⏱ ${min}:${seg}`;
+}
+
+
+/* -------- GENERAR TEST -------- */
+function generarTestAleatorio() {
+  const n = parseInt(document.getElementById("random-count").value);
+
+  if (!n || n < 1 || n > preguntasOriginales.length) {
+    alert("Introduce un número válido.");
+    return;
+  }
+
+  modoExamen = true;
+  aciertos = 0;
+  totalExamen = n;
+
+  document.getElementById("contador-examen").style.display = "block";
+  document.getElementById("progress-container").style.display = "block";
+
+  const usarTimer = document.getElementById("enable-timer").checked;
+
+  if (usarTimer) {
+    document.getElementById("timer-examen").style.display = "block";
+    tiempoRestante = n * TIEMPO_POR_PREGUNTA;
+    if (intervaloTiempo) clearInterval(intervaloTiempo);
+    intervaloTiempo = setInterval(() => {
+      tiempoRestante--;
+      actualizarTimerUI();
+      if (tiempoRestante <= 0) {
+        clearInterval(intervaloTiempo);
+        alert("⏱ ¡Se acabó el tiempo!");
+        finalizarExamen();
+      }
+    }, 1000);
+  } else {
+    document.getElementById("timer-examen").style.display = "none";
+    if (intervaloTiempo) clearInterval(intervaloTiempo);
+  }
+
+  // seleccionar aleatorias
+  let ids = [...Array(preguntasOriginales.length).keys()];
+  ids.sort(() => Math.random() - 0.5);
+  ids = ids.slice(0, n);
+  preguntas = ids.map(i => JSON.parse(JSON.stringify(preguntasOriginales[i])));
+  preguntas.forEach((p, i) => p.numero = i + 1);
+
+  generarMenu();
+  mostrarPregunta(0);
+}
+
+
+/* -------- FINALIZAR EXAMEN -------- */
+function finalizarExamen() {
+  const usarTimer = document.getElementById("enable-timer").checked;
+  if (usarTimer && intervaloTiempo) clearInterval(intervaloTiempo);
+  document.getElementById("timer-examen").style.display = "none";
+
+  const pct = Math.round((aciertos / totalExamen) * 100);
+  const esApto = pct >= 70;
+
+  const cont = document.getElementById("quiz-container");
+  cont.innerHTML = "";
+
+  const d = document.createElement("div");
+  d.style.textAlign = "center";
+
+  const h = document.createElement("h2");
+  h.textContent = esApto ? "🎉 ¡APTO!" : "❌ NO APTO";
+  h.style.color = esApto ? "#2e8b57" : "#d32f2f";
+
+  const p = document.createElement("p");
+  p.textContent = `Has acertado ${aciertos} de ${totalExamen} (${pct}%).`;
+
+  const volver = document.createElement("button");
+  volver.textContent = "Volver al modo estudio";
+  volver.style.marginTop = "20px";
+  volver.onclick = volverModoEstudio;
+
+  d.appendChild(h);
+  d.appendChild(p);
+  d.appendChild(volver);
+  cont.appendChild(d);
+
+  document.getElementById("progress-container").style.display = "none";
+  document.getElementById("contador-examen").style.display = "none";
+  document.getElementById("prevBtn").style.display = "none";
+  document.getElementById("nextBtn").style.display = "none";
+}
+
+
+/* -------- VOLVER MODO ESTUDIO -------- */
+function volverModoEstudio() {
+  modoExamen = false;
+  aciertos = 0;
+  totalExamen = 0;
+
+  preguntas = JSON.parse(JSON.stringify(preguntasOriginales));
+  preguntas.forEach(p => {
+    p.seleccionadas = [];
+    p.resultado = "";
+    p.respondida = false;
+  });
+
+  generarMenu();
+  mostrarPregunta(0);
+
+  document.getElementById("prevBtn").style.display = "inline-block";
+  document.getElementById("nextBtn").style.display = "inline-block";
+}
+</script>
+
+
+
+</body>
+</html>
+
+
+
+
+
+
+
